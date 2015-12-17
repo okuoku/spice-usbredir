@@ -306,7 +306,7 @@ static int libusb_status_or_error_to_redir_status(struct usbredirhost *host,
         case LIBUSB_TRANSFER_OVERFLOW:
             return usb_redir_babble;
 
-        case LIBUSB_ERROR_INVALID_PARAM: 
+        case LIBUSB_ERROR_INVALID_PARAM:
             return usb_redir_inval;
         case LIBUSB_ERROR_NO_DEVICE:
             usbredirhost_handle_disconnect(host);
@@ -1342,7 +1342,7 @@ void usbredirhost_wait_for_cancel_completion(struct usbredirhost *host)
         wait = host->cancels_pending || host->transfers_head.next;
         UNLOCK(host);
     } while (wait);
-}  
+}
 
 /* Only called from read callbacks */
 static void usbredirhost_cancel_pending_urbs_on_interface(

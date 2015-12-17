@@ -116,7 +116,7 @@ enum {
 
 enum {
     /* Supports USB 3 bulk streams */
-    usb_redir_cap_bulk_streams, 
+    usb_redir_cap_bulk_streams,
     /* The device_connect packet has the device_version_bcd field */
     usb_redir_cap_connect_device_version,
     /* Supports usb_redir_filter_reject and usb_redir_filter_filter pkts */
@@ -138,7 +138,7 @@ enum {
 struct usb_redir_header {
     uint32_t type;
     uint32_t length;
-    uint64_t id;  
+    uint64_t id;
 } ATTR_PACKED;
 
 struct usb_redir_hello_header {
@@ -264,7 +264,7 @@ struct usb_redir_control_packet_header {
     uint8_t status;
     uint16_t value;
     uint16_t index;
-    uint16_t length; 
+    uint16_t length;
 } ATTR_PACKED;
 
 struct usb_redir_bulk_packet_header {

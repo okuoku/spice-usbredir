@@ -378,7 +378,7 @@ static int usbredirtestclient_cmdline_ctrl(void)
         return 0;
     }
 
-    if (!(control_packet.endpoint & 0x80)) {    
+    if (!(control_packet.endpoint & 0x80)) {
         int i;
 
         data = malloc(control_packet.length);

@@ -92,7 +92,7 @@ va_log(struct usbredirparser_priv *parser, int verbose, const char *fmt, ...)
     va_start(ap, fmt);
     vsnprintf(buf + n, sizeof(buf) - n, fmt, ap);
     va_end(ap);
-    
+
     parser->callb.log_func(parser->callb.priv, verbose, buf);
 }
 
@@ -302,7 +302,7 @@ static int usbredirparser_get_type_header_len(
     struct usbredirparser_priv *parser =
         (struct usbredirparser_priv *)parser_pub;
     int command_for_host = 0;
-    
+
     if (parser->flags & usbredirparser_fl_usb_host) {
         command_for_host = 1;
     }
@@ -1057,7 +1057,7 @@ int usbredirparser_do_write(struct usbredirparser *parser_pub)
     int w, ret = 0;
 
     LOCK(parser);
-    for (;;) {    
+    for (;;) {
         wbuf = parser->write_buf;
         if (!wbuf)
             break;
@@ -1725,8 +1725,8 @@ int usbredirparser_unserialize(struct usbredirparser *parser_pub,
                 int type_header_len =
                     usbredirparser_get_type_header_len(parser_pub,
                                                        parser->header.type, 0);
-                if (type_header_len < 0 || 
-                    type_header_len > sizeof(parser->type_header) || 
+                if (type_header_len < 0 ||
+                    type_header_len > sizeof(parser->type_header) ||
                     parser->header.length < type_header_len ||
                     (parser->header.length > type_header_len &&
                      !usbredirparser_expect_extra_data(parser))) {

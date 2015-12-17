@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
         perror("Error setsockopt(SO_REUSEADDR) failed");
         exit(1);
     }
-                                                      
+
     memset(&serveraddr, 0, sizeof(serveraddr));
     serveraddr.sin6_family = AF_INET6;
     serveraddr.sin6_port   = htons(port);
