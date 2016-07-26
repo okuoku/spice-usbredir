@@ -205,7 +205,7 @@ int usbredirfilter_check(
      * by recursively calling this function with a flag that forbids
      * skipping (usbredirfilter_fl_dont_skip_non_boot_hid)
      */
-    if (num_skipped == interface_count) {
+    if (interface_count > 0 && num_skipped == interface_count) {
         rc = usbredirfilter_check(rules, rules_count,
                                   device_class, device_subclass, device_protocol,
                                   interface_class, interface_subclass,
