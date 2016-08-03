@@ -2280,6 +2280,7 @@ static void usbredirhost_bulk_packet(void *priv, uint64_t id,
                                          transfer, BULK_TIMEOUT);
 #else
         r = LIBUSB_ERROR_INVALID_PARAM;
+        free(data);
         goto error;
 #endif
     } else {
