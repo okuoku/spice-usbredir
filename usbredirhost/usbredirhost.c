@@ -1409,7 +1409,7 @@ void usbredirhost_set_buffered_output_size_cb(struct usbredirhost *host,
     usbredirhost_buffered_output_size buffered_output_size_func)
 {
     if (!host) {
-        ERROR("invalid usbredirhost");
+        fprintf(stderr, "%s: invalid usbredirhost", __func__);
         return;
     }
 
