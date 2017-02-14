@@ -309,6 +309,7 @@ int main(int argc, char *argv[])
     parser->iso_packet_func = usbredirtestclient_iso_packet;
     parser->interrupt_packet_func = usbredirtestclient_interrupt_packet;
 
+    usbredirparser_caps_set_cap(caps, usb_redir_cap_ep_info_max_packet_size);
     usbredirparser_caps_set_cap(caps, usb_redir_cap_64bits_ids);
 
     usbredirparser_init(parser, TESTCLIENT_VERSION, caps, USB_REDIR_CAPS_SIZE, 0);
@@ -497,9 +498,9 @@ static void usbredirtestclient_ep_info(void *priv,
 
     for (i = 0; i < 32; i++) {
        if (ep_info->type[i] != usb_redir_type_invalid) {
-           printf("endpoint: %02X, type: %d, interval: %d, interface: %d\n",
+           printf("endpoint: %02X, type: %d, interval: %d, interface: %d max-packetsize: %d\n",
                   I2EP(i), (int)ep_info->type[i], (int)ep_info->interval[i],
-                  (int)ep_info->interface[i]);
+                  (int)ep_info->interface[i], ep_info->max_packet_size[i]);
        }
     }
 }
