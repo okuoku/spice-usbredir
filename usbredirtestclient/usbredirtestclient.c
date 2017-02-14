@@ -134,6 +134,15 @@ static int usbredirtestclient_write(void *priv, uint8_t *data, int count)
     return r;
 }
 
+static void usbredirtestclient_hello(void *priv,
+    struct usb_redir_hello_header *h)
+{
+    /* Queue a reset + set config the other test commands will be send in
+       response to the status packets of previous commands */
+    usbredirparser_send_reset(parser);
+    usbredirparser_send_get_configuration(parser, get_config_id);
+}
+
 static void usage(int exit_code, char *argv0)
 {
     fprintf(exit_code? stderr:stdout,
@@ -196,6 +205,7 @@ int main(int argc, char *argv[])
     struct sigaction act;
     char port_str[16];
     int port = 4000;
+    uint32_t caps[USB_REDIR_CAPS_SIZE] = { 0, };
 
     while ((o = getopt_long(argc, argv, "hp:", longopts, NULL)) != -1) {
         switch (o) {
@@ -284,6 +294,7 @@ int main(int argc, char *argv[])
     parser->log_func = usbredirtestclient_log;
     parser->read_func = usbredirtestclient_read;
     parser->write_func = usbredirtestclient_write;
+    parser->hello_func = usbredirtestclient_hello;
     parser->device_connect_func = usbredirtestclient_device_connect;
     parser->device_disconnect_func = usbredirtestclient_device_disconnect;
     parser->interface_info_func = usbredirtestclient_interface_info;
@@ -297,12 +308,10 @@ int main(int argc, char *argv[])
     parser->bulk_packet_func = usbredirtestclient_bulk_packet;
     parser->iso_packet_func = usbredirtestclient_iso_packet;
     parser->interrupt_packet_func = usbredirtestclient_interrupt_packet;
-    usbredirparser_init(parser, TESTCLIENT_VERSION, NULL, 0, 0);
 
-    /* Queue a reset + set config the other test commands will be send in
-       response to the status packets of previous commands */
-    usbredirparser_send_reset(parser);
-    usbredirparser_send_get_configuration(parser, get_config_id);
+    usbredirparser_caps_set_cap(caps, usb_redir_cap_64bits_ids);
+
+    usbredirparser_init(parser, TESTCLIENT_VERSION, caps, USB_REDIR_CAPS_SIZE, 0);
 
     run_main_loop();
 
