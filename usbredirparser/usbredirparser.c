@@ -267,7 +267,8 @@ static void usbredirparser_handle_hello(struct usbredirparser *parser_pub,
 
     /* In case hello->version is not 0 terminated (which would be a protocol
        violation)_ */
-    snprintf(buf, sizeof(buf), "%s", hello->version);
+    strncpy(buf, hello->version, sizeof(buf));
+    buf[sizeof(buf)-1] = '\0';
 
     memset(parser->peer_caps, 0, sizeof(parser->peer_caps));
     if (data_len > sizeof(parser->peer_caps)) {
