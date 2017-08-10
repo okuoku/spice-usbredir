@@ -604,7 +604,11 @@ static void usbredirhost_release(struct usbredirhost *host, int attach_drivers)
     if (!(host->quirks & QUIRK_DO_NOT_RESET)) {
         r = libusb_reset_device(host->handle);
         if (r != 0) {
-            ERROR("error resetting device: %s", libusb_error_name(r));
+            /* if we're releasing the device because it was removed, resetting
+             * will fail. Don't print a warning in this situation */
+            if (r != LIBUSB_ERROR_NO_DEVICE) {
+                ERROR("error resetting device: %s", libusb_error_name(r));
+            }
             return;
         }
     }
