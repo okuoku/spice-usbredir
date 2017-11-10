@@ -93,7 +93,7 @@ static int usbredirserver_write(void *priv, uint8_t *data, int count)
 static void usage(int exit_code, char *argv0)
 {
     fprintf(exit_code? stderr:stdout,
-        "Usage: %s [-p|--port <port>] [-v|--verbose <0-5>] <usbbus-usbaddr|vendorid:prodid>\n",
+        "Usage: %s [-p|--port <port>] [-v|--verbose <0-5>] <busnum-devnum|vendorid:prodid>\n",
         argv0);
     exit(exit_code);
 }
@@ -341,12 +341,12 @@ int main(int argc, char *argv[])
             if (i < n) {
                 if (libusb_open(list[i], &handle) != 0) {
                     fprintf(stderr,
-                        "Could not open usb-device at bus-addr %d-%d\n",
+                        "Could not open usb-device at busnum-devnum %d-%d\n",
                         usbbus, usbaddr);
                 }
             } else {
                 fprintf(stderr,
-                    "Could not find an usb-device at bus-addr %d-%d\n",
+                    "Could not find an usb-device at busnum-devnum %d-%d\n",
                     usbbus, usbaddr);
             }
             libusb_free_device_list(list, 1);
