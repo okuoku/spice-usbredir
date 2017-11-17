@@ -36,6 +36,7 @@
 #include <sys/time.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include "usbredirhost.h"
 
 
@@ -49,6 +50,8 @@ static struct usbredirhost *host;
 static const struct option longopts[] = {
     { "port", required_argument, NULL, 'p' },
     { "verbose", required_argument, NULL, 'v' },
+    { "ipv4", required_argument, NULL, '4' },
+    { "ipv6", required_argument, NULL, '6' },
     { "help", no_argument, NULL, 'h' },
     { NULL, 0, NULL, 0 }
 };
@@ -93,7 +96,9 @@ static int usbredirserver_write(void *priv, uint8_t *data, int count)
 static void usage(int exit_code, char *argv0)
 {
     fprintf(exit_code? stderr:stdout,
-        "Usage: %s [-p|--port <port>] [-v|--verbose <0-5>] <busnum-devnum|vendorid:prodid>\n",
+        "Usage: %s [-p|--port <port>] [-v|--verbose <0-5>] "
+        "[[-4|--ipv4 ipaddr]|[-6|--ipv6 ipaddr]] "
+        "<busnum-devnum|vendorid:prodid>\n",
         argv0);
     exit(exit_code);
 }
@@ -198,11 +203,15 @@ int main(int argc, char *argv[])
     int usbvendor  = -1;
     int usbproduct = -1;
     int on = 1;
-    struct sockaddr_in6 serveraddr;
+    char *ipv4_addr = NULL, *ipv6_addr = NULL;
+    union {
+        struct sockaddr_in v4;
+        struct sockaddr_in6 v6;
+    } serveraddr;
     struct sigaction act;
     libusb_device_handle *handle = NULL;
 
-    while ((o = getopt_long(argc, argv, "hp:v:", longopts, NULL)) != -1) {
+    while ((o = getopt_long(argc, argv, "hp:v:4:6:", longopts, NULL)) != -1) {
         switch (o) {
         case 'p':
             port = strtol(optarg, &endptr, 10);
@@ -217,6 +226,12 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "Invalid value for --verbose: '%s'\n", optarg);
                 usage(1, argv[0]);
             }
+            break;
+        case '4':
+            ipv4_addr = optarg;
+            break;
+        case '6':
+            ipv6_addr = optarg;
             break;
         case '?':
         case 'h':
@@ -272,9 +287,13 @@ int main(int argc, char *argv[])
 
     libusb_set_debug(ctx, verbose);
 
-    server_fd = socket(AF_INET6, SOCK_STREAM, 0);
+    if (ipv4_addr) {
+        server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    } else {
+        server_fd = socket(AF_INET6, SOCK_STREAM, 0);
+    }
     if (server_fd == -1) {
-        perror("Error creating ipv6 socket");
+        perror("Error creating ip socket");
         exit(1);
     }
 
@@ -284,12 +303,32 @@ int main(int argc, char *argv[])
     }
 
     memset(&serveraddr, 0, sizeof(serveraddr));
-    serveraddr.sin6_family = AF_INET6;
-    serveraddr.sin6_port   = htons(port);
-    serveraddr.sin6_addr   = in6addr_any;
 
-    if (bind(server_fd, (struct sockaddr *)&serveraddr, sizeof(serveraddr))) {
-        fprintf(stderr, "Error binding port %d: %s\n", port, strerror(errno));
+    if (ipv4_addr) {
+        serveraddr.v4.sin_family = AF_INET;
+        serveraddr.v4.sin_port   = htons(port);
+        if ((inet_pton(AF_INET, ipv4_addr,
+                       &serveraddr.v4.sin_addr)) != 1) {
+            perror("Error convert ipv4 address");
+            exit(1);
+        }
+    } else {
+        serveraddr.v6.sin6_family = AF_INET6;
+        serveraddr.v6.sin6_port   = htons(port);
+        if (ipv6_addr) {
+            if ((inet_pton(AF_INET6, ipv6_addr,
+                           &serveraddr.v6.sin6_addr)) != 1) {
+                perror("Error convert ipv6 address");
+                exit(1);
+            }
+        } else {
+            serveraddr.v6.sin6_addr   = in6addr_any;
+        }
+    }
+
+    if (bind(server_fd, (struct sockaddr *)&serveraddr,
+             sizeof(serveraddr))) {
+        perror("Error bind");
         exit(1);
     }
 
