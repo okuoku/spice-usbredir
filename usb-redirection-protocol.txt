@@ -115,7 +115,7 @@ usb-guest: The entity connecting to the usb-device and using it as if
     os which accesses a usb-device over the network as if it is part of the
     virtual machine.
 usb-host: The entity making the usb-device available for use by a usb-guest.
-    For example a deamon on a machine which "exports" the usb-device over the
+    For example a daemon on a machine which "exports" the usb-device over the
     network which then "appears" inside a virtual machine on another machine.
 
 
@@ -159,7 +159,7 @@ Control packets are handled synchroneously inside the usb-host, it will hand
 the request over to the host os and then *wait* for a response. The usb-host
 will thus stop processing further packets. Where as for data packets the
 usb-host hands them over to the host os with the request to let the usb-host
-process know when there is a respone from the usb-device.
+process know when there is a response from the usb-device.
 
 Note that control packets should only be send to the usb-host when no data
 packets are pending on the device / interface / endpoint affected by the
