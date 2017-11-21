@@ -85,7 +85,7 @@ enum {
    first_cmdline_id
 };
 
-static int verbose = usbredirparser_info; /* 2 */
+static int verbose = usbredirparser_info; /* 3 */
 static int client_fd, running = 1;
 static struct usbredirparser *parser;
 static int id = first_cmdline_id;
