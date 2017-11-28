@@ -366,8 +366,7 @@ int main(int argc, char *argv[])
                 fprintf(stderr,
                     "Could not open an usb-device with vid:pid %04x:%04x\n",
                     usbvendor, usbproduct);
-            }
-            if (verbose >= usbredirparser_info) {
+            } else if (verbose >= usbredirparser_info) {
                 libusb_device *dev;
                 dev = libusb_get_device(handle);
                 fprintf(stderr, "Open a usb-device with vid:pid %04x:%04x on "
