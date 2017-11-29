@@ -259,11 +259,12 @@ int main(int argc, char *argv[])
             invalid_usb_device_id(argv[optind], argv[0]);
         }
         usbvendor = strtol(argv[optind], &endptr, 16);
-        if (*endptr != ':') {
+        if (*endptr != ':' || usbvendor <= 0 || usbvendor > 0xffff) {
             invalid_usb_device_id(argv[optind], argv[0]);
         }
         usbproduct = strtol(delim + 1, &endptr, 16);
-        if (*endptr != '\0') {
+        /* Product ID 0000 is valid */
+        if (*endptr != '\0' || usbproduct < 0 || usbproduct > 0xffff) {
             invalid_usb_device_id(argv[optind], argv[0]);
         }
     }
