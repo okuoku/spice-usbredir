@@ -37,6 +37,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netinet/tcp.h>
 #include "usbredirhost.h"
 
 
@@ -52,6 +53,7 @@ static const struct option longopts[] = {
     { "verbose", required_argument, NULL, 'v' },
     { "ipv4", required_argument, NULL, '4' },
     { "ipv6", required_argument, NULL, '6' },
+    { "keepalive", required_argument, NULL, 'k' },
     { "help", no_argument, NULL, 'h' },
     { NULL, 0, NULL, 0 }
 };
@@ -98,6 +100,7 @@ static void usage(int exit_code, char *argv0)
     fprintf(exit_code? stderr:stdout,
         "Usage: %s [-p|--port <port>] [-v|--verbose <0-5>] "
         "[[-4|--ipv4 ipaddr]|[-6|--ipv6 ipaddr]] "
+        "[-k|--keepalive seconds] "
         "<busnum-devnum|vendorid:prodid>\n",
         argv0);
     exit(exit_code);
@@ -203,6 +206,7 @@ int main(int argc, char *argv[])
     int usbvendor  = -1;
     int usbproduct = -1;
     int on = 1;
+    int keepalive  = -1;
     char *ipv4_addr = NULL, *ipv6_addr = NULL;
     union {
         struct sockaddr_in v4;
@@ -211,7 +215,7 @@ int main(int argc, char *argv[])
     struct sigaction act;
     libusb_device_handle *handle = NULL;
 
-    while ((o = getopt_long(argc, argv, "hp:v:4:6:", longopts, NULL)) != -1) {
+    while ((o = getopt_long(argc, argv, "hp:v:4:6:k:", longopts, NULL)) != -1) {
         switch (o) {
         case 'p':
             port = strtol(optarg, &endptr, 10);
@@ -232,6 +236,13 @@ int main(int argc, char *argv[])
             break;
         case '6':
             ipv6_addr = optarg;
+            break;
+        case 'k':
+            keepalive = strtol(optarg, &endptr, 10);
+            if (*endptr != '\0') {
+                fprintf(stderr, "Invalid value for -k: '%s'\n", optarg);
+                usage(1, argv[0]);
+            }
             break;
         case '?':
         case 'h':
@@ -346,6 +357,38 @@ int main(int argc, char *argv[])
             }
             perror("accept");
             break;
+        }
+
+        if (keepalive > 0) {
+            int optval = 1;
+            socklen_t optlen = sizeof(optval);
+            if (setsockopt(client_fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen) == -1) {
+                if (errno != ENOTSUP) {
+                    perror("setsockopt SO_KEEPALIVE error.");
+                    break;
+                }
+            }
+            optval = keepalive;	/* set default TCP_KEEPIDLE time from cmdline */
+            if (setsockopt(client_fd, SOL_TCP, TCP_KEEPIDLE, &optval, optlen) == -1) {
+                if (errno != ENOTSUP) {
+                    perror("setsockopt TCP_KEEPIDLE error.");
+                    break;
+                }
+            }
+            optval = 10;	/* set default TCP_KEEPINTVL time as 10s */
+            if (setsockopt(client_fd, SOL_TCP, TCP_KEEPINTVL, &optval, optlen) == -1) {
+                if (errno != ENOTSUP) {
+                    perror("setsockopt TCP_KEEPINTVL error.");
+                    break;
+                }
+            }
+            optval = 3;	/* set default TCP_KEEPCNT as 3 */
+            if (setsockopt(client_fd, SOL_TCP, TCP_KEEPCNT, &optval, optlen) == -1) {
+                if (errno != ENOTSUP) {
+                    perror("setsockopt TCP_KEEPCNT error.");
+                    break;
+                }
+            }
         }
 
         flags = fcntl(client_fd, F_GETFL);
