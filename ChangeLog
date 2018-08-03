@@ -1,3 +1,17 @@
+usbredir-0.8.0   03 Aug 2018
+----------------------------
+-Source code and bug tracker hosted in Freedesktop's instance of Gitlab
+ -https://gitlab.freedesktop.org/spice/usbredir
+-usbredirfilter
+ -Fix busy wait due endless recursion when interface_count is zero
+-usbredirhost:
+ -Fix leak on error
+-usbredirserver:
+ -Use 'busnum-devnum' instead of 'usbbus-usbaddr'
+ -Add support for bind specific address -4 for ipv4, -6 for ipv6
+ -Reject empty vendorid from command line
+ -Enable TCP keepalive
+
 usbredir-0.7.1   29 Oct 2015
 ----------------------------
 -usbredirfilter
