@@ -1,0 +1,15 @@
+image: fedora:latest
+
+variables:
+  DEPENDENCIES: gcc git libtool make bzip2
+                libusb-devel
+
+build_stable:
+  before_script:
+    - dnf install -y --nogpgcheck $DEPENDENCIES
+  script:
+    - ./autogen.sh --prefix=/usr
+    - make
+    - make check
+    - make install
+    - make distcheck
