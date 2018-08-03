@@ -30,13 +30,13 @@ A small testclient for the usbredir protocol over tcp, using usbredirparser
 
 
 The upstream git repository can be found at
-http://cgit.freedesktop.org/spice/usbredir/
+http://gitlab.freedesktop.org/spice/usbredir
 
 Bug reports can be filed against the Spice/usbredir component:
-https://bugs.freedesktop.org/enter_bug.cgi?product=Spice&component=usbredir
+https://gitlab.freedesktop.org/spice/usbredir/issues
 
 You can also send patches to the spice-devel mailing list:
 http://lists.freedesktop.org/mailman/listinfo/spice-devel
 
 
-Last updated 23 October 2015, by Christophe Fergeau <cfergeau@redhat.com>
+Last updated 03 August 2018, by Victor Toso <victortoso@redhat.com>
