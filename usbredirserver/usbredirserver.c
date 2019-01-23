@@ -43,6 +43,13 @@
 
 #define SERVER_VERSION "usbredirserver " PACKAGE_VERSION
 
+#if !defined(SOL_TCP) && defined(IPPROTO_TCP)
+#define SOL_TCP IPPROTO_TCP
+#endif
+#if !defined(TCP_KEEPIDLE) && defined(TCP_KEEPALIVE) && defined(__APPLE__)
+#define TCP_KEEPIDLE TCP_KEEPALIVE
+#endif
+
 static int verbose = usbredirparser_info;
 static int client_fd, running = 1;
 static libusb_context *ctx;
