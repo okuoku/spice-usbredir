@@ -251,6 +251,7 @@ int main(int argc, char *argv[])
                 usage(1, argv[0]);
             }
             break;
+
         case '?':
         case 'h':
             usage(o == '?', argv[0]);
@@ -370,6 +371,7 @@ int main(int argc, char *argv[])
             break;
         }
 
+#if 0
         if (keepalive > 0) {
             int optval = 1;
             socklen_t optlen = sizeof(optval);
@@ -401,6 +403,9 @@ int main(int argc, char *argv[])
                 }
             }
         }
+#else
+        (void)keepalive;
+#endif
 
         flags = fcntl(client_fd, F_GETFL);
         if (flags == -1) {
