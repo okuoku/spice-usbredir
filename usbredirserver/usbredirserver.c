@@ -40,6 +40,9 @@
 #include <netinet/tcp.h>
 #include "usbredirhost.h"
 
+#ifdef __CYGWIN__
+#include <pthread.h>
+#endif
 
 #define SERVER_VERSION "usbredirserver " PACKAGE_VERSION
 
@@ -119,6 +122,133 @@ static void invalid_usb_device_id(char *usb_device_id, char *argv0)
     usage(1, argv0);
 }
 
+#ifdef __CYGWIN__
+static pthread_cond_t cnd;
+static pthread_mutex_t mtx;
+static int polling_thread_active = 0;
+static int has_write_data = 0;
+static int has_read_data = 0;
+static int data_writable = 0;
+static int has_action = 0;
+static int action_done = 0;
+
+static void*
+thr_checkfdevents(void* bogus){
+    fd_set readfds, writefds;
+    int n, nfds;
+
+    int myfd = client_fd;
+
+    pthread_mutex_lock(&mtx);
+    polling_thread_active = 1;
+    pthread_cond_signal(&cnd);
+    pthread_mutex_unlock(&mtx);
+
+    for(;;){
+
+        FD_ZERO(&readfds);
+        FD_ZERO(&writefds);
+
+        /* Fetch event parameters */
+        pthread_mutex_lock(&mtx);
+        
+        FD_SET(myfd, &readfds);
+        if (has_write_data) {
+            FD_SET(myfd, &writefds);
+        }
+        nfds = myfd + 1;
+
+        has_read_data = 0;
+        data_writable = 0;
+        pthread_mutex_unlock(&mtx);
+
+        /* Wait */
+        //printf("Wait...\n");
+        n = select(nfds, &readfds, &writefds, NULL, NULL);
+        //printf("Done... %d\n",n);
+
+        if(n < 0){
+            printf("Select err %d\n", errno);
+            return NULL;
+        }else if(n > 0){
+            /* Setup I/O content */
+            pthread_mutex_lock(&mtx);
+            if (FD_ISSET(myfd, &readfds)) {
+                has_read_data = 1;
+            }
+            if (FD_ISSET(myfd, &writefds)) {
+                data_writable = 1;
+            }
+            pthread_mutex_unlock(&mtx);
+
+            /* Wakeup if needed */
+            libusb_lock_event_waiters(ctx);
+            action_done = 0;
+            has_action = 1;
+            libusb_interrupt_event_handler(ctx);
+            libusb_unlock_event_waiters(ctx);
+        }
+    }
+
+    return NULL;
+}
+
+static void run_main_loop(void)
+{
+    pthread_t thr;
+    struct timeval tv = {60, 0};
+    int r;
+    (void)r;
+
+    has_write_data = usbredirhost_has_data_to_write(host);
+
+    /* Spin-up fd polling thread */
+    pthread_cond_init(&cnd, NULL);
+    pthread_mutex_init(&mtx, NULL);
+
+    pthread_create(&thr, NULL, thr_checkfdevents, NULL);
+    pthread_mutex_lock(&mtx);
+    for(;;){
+        if(polling_thread_active){
+            break;
+        }
+        pthread_cond_wait(&cnd,&mtx);
+        printf("Recheck.. %d\n",polling_thread_active);
+    }
+    pthread_mutex_unlock(&mtx);
+
+    while (running && client_fd != -1) {
+        has_write_data = usbredirhost_has_data_to_write(host);
+
+        r = libusb_handle_events_timeout_completed(ctx, &tv, &has_action);
+        //printf("Wait event %d\n", r);
+
+        libusb_lock_event_waiters(ctx);
+        has_action = 0;
+        libusb_unlock_event_waiters(ctx);
+
+        //printf("Mainloop: %d %d %d\n",has_action ,has_read_data, data_writable);
+
+        pthread_mutex_lock(&mtx);
+        if (has_read_data) {
+            usbredirhost_read_guest_data(host);
+        }
+        //if (data_writable) {
+        usbredirhost_write_guest_data(host);
+        //}
+        pthread_mutex_unlock(&mtx);
+
+        /* usbredirhost_read_guest_data may have detected client disconnect */
+        if (client_fd == -1)
+            break;
+    }
+
+    if (client_fd != -1) { /* Broken out of the loop because of an error ? */
+        close(client_fd);
+        client_fd = -1;
+    }
+}
+#else
 static void run_main_loop(void)
 {
     const struct libusb_pollfd **pollfds = NULL;
@@ -197,6 +327,7 @@ static void run_main_loop(void)
     }
     free(pollfds);
 }
+#endif
 
 static void quit_handler(int sig)
 {
